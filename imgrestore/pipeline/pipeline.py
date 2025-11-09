@@ -1,5 +1,3 @@
-# src/pipeline/pipeline.py
-
 from __future__ import annotations
 
 from pathlib import Path
@@ -25,9 +23,16 @@ class Pipeline:
         close_iters: int = 1,
         post_erode_iters: int = 0,
         median_ksize: int = 0,
-
         inpaint_method: str = "telea",
         inpaint_radius: float = 3.0,
+        use_blackhat: bool = True,
+        blackhat_len: int = 15,
+        blackhat_orientation: str = "vertical",
+        blackhat_thresh: int | None = None,
+        blackhat_scale: float = 0.7,
+        min_area: int = 20,
+        max_area_frac: float = 0.05,
+        min_aspect_ratio: float = 3.0,
     ) -> None:
         self.pre = Preprocessor(
             scale=resize_scale,
@@ -42,6 +47,14 @@ class Pipeline:
             close_iters=close_iters,
             post_erode_iters=post_erode_iters,
             median_ksize=median_ksize,
+            use_blackhat=use_blackhat,
+            blackhat_len=blackhat_len,
+            blackhat_orientation=blackhat_orientation,
+            blackhat_thresh=blackhat_thresh,
+            blackhat_scale=blackhat_scale,
+            min_area=min_area,
+            max_area_frac=max_area_frac,
+            min_aspect_ratio=min_aspect_ratio,
         )
         self.inpainter = Inpainter(
             method=inpaint_method,

@@ -3,8 +3,8 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
-from pipeline.pipeline import Pipeline
-from utils.image_io import build_output_path, write_image
+from imgrestore.pipeline.pipeline import Pipeline
+from imgrestore.utils.image_io import build_output_path, write_image
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
