@@ -55,21 +55,6 @@ Você verá `(.venv)` no início da linha de comando.
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
-
-#### 7. Aplicar patch necessário (importante!)
-
-Após a instalação, é necessário corrigir um problema de compatibilidade no pacote `basicsr`:
-
-**Opção A: Comando Automatizado (PowerShell - Recomendado)**
-
-Execute no PowerShell (com ambiente virtual ativado):
-
-```powershell
-$patchFile = ".venv\Lib\site-packages\basicsr\data\degradations.py"
-(Get-Content $patchFile) -replace 'from torchvision.transforms.functional_tensor import rgb_to_grayscale', 'from torchvision.transforms.functional import rgb_to_grayscale' | Set-Content $patchFile
-Write-Host "Patch aplicado com sucesso!" -ForegroundColor Green
-```
-
 ---
 
 ### Instalação no Linux/Mac
@@ -119,42 +104,6 @@ Você verá `(.venv)` no início da linha de comando.
 pip install --upgrade pip
 pip install -r requirements.txt
 ```
-
-#### 6. Aplicar patch necessário (importante!)
-
-Execute o seguinte comando para aplicar o patch automaticamente:
-
-```bash
-# Localizar o arquivo
-PATCH_FILE=".venv/lib/python3.12/site-packages/basicsr/data/degradations.py"
-
-# Aplicar correção
-sed -i.bak 's/from torchvision.transforms.functional_tensor import rgb_to_grayscale/from torchvision.transforms.functional import rgb_to_grayscale/' "$PATCH_FILE"
-
-echo "Patch aplicado com sucesso!"
-```
-
-Ou edite manualmente o arquivo:
-```bash
-nano .venv/lib/python3.12/site-packages/basicsr/data/degradations.py
-```
-
-**Na linha 8, altere:**
-
-De:
-```python
-from torchvision.transforms.functional_tensor import rgb_to_grayscale
-```
-
-Para:
-```python
-from torchvision.transforms.functional import rgb_to_grayscale
-```
-
-Salve com `Ctrl+O`, depois `Enter`, e saia com `Ctrl+X`.
-
-> **Nota:** Este patch precisa ser reaplicado se você reinstalar as dependências.
-
 ---
 
 ## Configuração dos Modelos
