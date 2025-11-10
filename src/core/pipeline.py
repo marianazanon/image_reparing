@@ -9,7 +9,7 @@ import numpy as np
 from src.core.detector import FaceDetector, Detection
 from src.core.align import FaceCropper, CropMeta
 from src.core.preprocess import FacePreprocessor
-from src.core.prior_gan import GANPriorRestorer
+from src.core.prior_gran import GANPriorRestorer
 from src.core.blender import FaceBlender
 from src.utils.image_io import imread, imwrite
 
