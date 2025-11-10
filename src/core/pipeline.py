@@ -11,6 +11,7 @@ from src.core.align import FaceCropper, CropMeta
 from src.core.preprocess import FacePreprocessor
 from src.core.prior_gran import GANPriorRestorer
 from src.core.blender import FaceBlender
+from src.core.colorizer import ImageColorizer
 from src.utils.image_io import imread, imwrite
 
 
@@ -54,6 +55,7 @@ class RestorationPipeline:
         preproc: FacePreprocessor,
         prior: GANPriorRestorer,
         blender: FaceBlender,
+        colorizer: Optional[ImageColorizer] = None,
         max_faces: Optional[int] = None,         # limit how many faces to process per image
         process_order: str = "score_desc",       # or "left_to_right", "top_to_bottom"
     ) -> None:
@@ -62,6 +64,7 @@ class RestorationPipeline:
         self.preproc = preproc
         self.prior = prior
         self.blender = blender
+        self.colorizer = colorizer or ImageColorizer()
         self.max_faces = max_faces
         self.process_order = process_order
 
@@ -73,6 +76,9 @@ class RestorationPipeline:
             (restored_rgb, diagnostics)
         """
         t0 = time.perf_counter()
+        
+        # Apply colorization first if needed (before face detection)
+        image_rgb = self.colorizer.colorize(image_rgb)
 
         td0 = time.perf_counter()
         detections = self.detector.detect(image_rgb)

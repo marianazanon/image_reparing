@@ -12,13 +12,12 @@ import numpy as np
 from src.core.detector import FaceDetector
 from src.core.align import FaceCropper
 from src.core.preprocess import FacePreprocessor, PreprocessConfig
-from src.core.prior_gan import GANPriorRestorer, GANPriorConfig
+from src.core.prior_gran import GANPriorRestorer, GANPriorConfig
 from src.core.blender import FaceBlender, BlendConfig
+from src.core.colorizer import ImageColorizer, ColorizerConfig
 from src.core.pipeline import RestorationPipeline
 from src.utils.image_io import imread, imwrite, list_images
 
-
-# ---------------------------- fallback prior (optional) ----------------------------
 
 class _NoOpPrior:
     """Fallback when GFPGAN isn't available and user allows skipping the GAN step."""
@@ -26,7 +25,58 @@ class _NoOpPrior:
         return crop_rgb
 
 
-# --------------------------------- CLI helpers ------------------------------------
+def _apply_preset(args: argparse.Namespace) -> None:
+    """Apply preset configurations to args if not already set by user."""
+    if args.preset == "standard":
+        # Keep existing defaults
+        return
+    
+    elif args.preset == "enhanced":
+        # Enhanced preset for better clarity and quality
+        if args.usm_amount == 0.6:  # If still default
+            args.usm_amount = 1.2
+        if args.usm_radius == 1.2:
+            args.usm_radius = 1.5
+        if args.usm_threshold == 4:
+            args.usm_threshold = 2
+        if args.nlm_h_color == 7.0:
+            args.nlm_h_color = 10.0
+        if args.nlm_h_luma == 7.0:
+            args.nlm_h_luma = 10.0
+        if args.prior_upscale == 1:
+            args.prior_upscale = 2
+        if args.blend_method == "poisson_mixed":
+            args.blend_method = "feather"
+        if args.feather_frac == 0.12:
+            args.feather_frac = 0.08
+        if args.det_conf == 0.6:
+            args.det_conf = 0.5
+        if args.jpg_quality == 95:
+            args.jpg_quality = 98
+    
+    elif args.preset == "maximum":
+        # Maximum quality preset (slower)
+        if args.usm_amount == 0.6:
+            args.usm_amount = 1.5
+        if args.usm_radius == 1.2:
+            args.usm_radius = 2.0
+        if args.usm_threshold == 4:
+            args.usm_threshold = 1
+        if args.nlm_h_color == 7.0:
+            args.nlm_h_color = 12.0
+        if args.nlm_h_luma == 7.0:
+            args.nlm_h_luma = 12.0
+        if args.prior_upscale == 1:
+            args.prior_upscale = 4
+        if args.blend_method == "poisson_mixed":
+            args.blend_method = "feather"
+        if args.feather_frac == 0.12:
+            args.feather_frac = 0.06
+        if args.det_conf == 0.6:
+            args.det_conf = 0.4
+        if args.jpg_quality == 95:
+            args.jpg_quality = 100
+
 
 def _build_pipeline(args: argparse.Namespace) -> RestorationPipeline:
     """Instantiate all components using CLI args and return a ready pipeline."""
@@ -108,6 +158,13 @@ def _build_pipeline(args: argparse.Namespace) -> RestorationPipeline:
     )
     blender = FaceBlender(blend_cfg)
 
+    # Colorizer
+    colorizer_cfg = ColorizerConfig(
+        method=args.colorize_method,
+        enable=not args.no_colorize,
+    )
+    colorizer = ImageColorizer(colorizer_cfg)
+
     # Pipe
     pipeline = RestorationPipeline(
         detector=detector,
@@ -115,6 +172,7 @@ def _build_pipeline(args: argparse.Namespace) -> RestorationPipeline:
         preproc=preproc,
         prior=prior,  # type: ignore[arg-type]
         blender=blender,
+        colorizer=colorizer,
         max_faces=args.max_faces,
         process_order=args.order,
     )
@@ -140,12 +198,18 @@ def _save_diags(diags_json_path: Path, data: Dict) -> None:
         json.dump(data, f, indent=2)
 
 
-# ------------------------------------- main ---------------------------------------
-
 def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p = argparse.ArgumentParser(
         prog="face-restore",
         description="Blind Face Restoration (OpenCV pre-clean + GFPGAN prior + controlled blending).",
+    )
+
+    # Preset
+    p.add_argument(
+        "--preset",
+        choices=["standard", "enhanced", "maximum"],
+        default="enhanced",
+        help="Quality preset: standard (fast), enhanced (recommended), maximum (slow but best quality).",
     )
 
     # I/O
@@ -212,6 +276,10 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
     p.add_argument("--feather-frac", type=float, default=0.12)
     p.add_argument("--feather-min-px", type=int, default=8)
     p.add_argument("--mask-erode-px", type=int, default=0)
+    
+    # Colorizer
+    p.add_argument("--no-colorize", action="store_true", help="Disable automatic colorization of grayscale images.")
+    p.add_argument("--colorize-method", choices=["opencv", "none"], default="opencv", help="Colorization method.")
 
     # Pipeline
     p.add_argument("--max-faces", type=int, default=None, help="Max faces per image (None = all).")
@@ -226,6 +294,9 @@ def parse_args(argv: Optional[List[str]] = None) -> argparse.Namespace:
 
 def main(argv: Optional[List[str]] = None) -> None:
     args = parse_args(argv)
+    
+    # Apply preset configurations
+    _apply_preset(args)
 
     # Logging level
     level = logging.WARNING
