@@ -35,7 +35,6 @@ class PipelineDiagnostics:
     t_total_ms: float
 
 
-# --------- Main Orchestrator ---------
 
 class RestorationPipeline:
     """
