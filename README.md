@@ -5,16 +5,6 @@ ADICIONAR AQUI INFO SOBRE O ARTIGO E GRUPO
 
 ---
 
-## Requisitos do Sistema
-
-### Requisitos Mínimos
-
-- **Sistema Operacional:** Windows 10+, Linux (Ubuntu 20.04+), ou macOS 10.15+
-- **Python:** 3.9 ou superior (recomendado: 3.12)
-- **RAM:** 8 GB mínimo (16 GB recomendado)
-- **Espaço em Disco:** 2 GB para dependências e modelos
-- **GPU (opcional):** NVIDIA CUDA compatível para processamento acelerado
-
 ### Dependências Principais
 
 - PyTorch ≥ 2.2.0
